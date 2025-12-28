@@ -13,177 +13,252 @@ import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import java.util.ArrayList;
+import java.util.Scanner;
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
 public class BankaYoneticisi {
+
     private ArrayList<Musteri> musteriler;
     private Musteri mevcutMusteri;
     private Scanner scanner;
 
     public BankaYoneticisi() {
-        this.musteriler = new ArrayList<>();
-        this.scanner = new Scanner(System.in);
+        musteriler = new ArrayList<>();
+        scanner = new Scanner(System.in);
 
-        // HAZIR KAYITLI MÜŞTERİLER
-        Musteri m1 = new Musteri("Burcu Yugit", "480110123456", "TR123456789012345678901234", "1234");
-        m1.getHesap().paraYatir(10000); 
-        musteriler.add(m1);
+        Musteri m1 = new Musteri("Burcu Yigit", "480110123456",
+                "TR100000000000000000000001", "1234");
+        m1.getHesap().paraYatir(10000);
 
-        Musteri m2 = new Musteri("Tugberk Kocatekin", "467900200122", "TR123456789009876543456789", "4345");
+        Musteri m2 = new Musteri("Tugberk Kocatekin", "467900200122",
+                "TR100000000000000000000002", "4345");
         m2.getHesap().paraYatir(5000);
-        musteriler.add(m2);
 
-        Musteri m3 = new Musteri("Ahmet Yilmaz", "111111111112", "TR999999999999999999999999", "9999");
-        m3.getHesap().paraYatir(7500);
-        musteriler.add(m3);
+        musteriler.add(m1);
+        musteriler.add(m2);
     }
 
     public void baslat() {
         while (true) {
-            if (mevcutMusteri == null) {
+            if (mevcutMusteri == null)
                 girisEkrani();
-            } else {
+            else
                 islemMenusu();
-            }
         }
     }
 
+    // ================= ANA MENU =================
     private void girisEkrani() {
-        System.out.println("*** Ana Ekran ***");
-        System.out.println("1- Giris Yap\n2- Yeni Kayit Ol\n0- Sistemi Kapat");
-        System.out.print("Lütfen gerçekleştirmek istediğiniz işlemi seçiniz: ");
+        System.out.println("\n*** ANA MENU ***");
+        System.out.println("1- Giris Yap");
+        System.out.println("2- Kayit Ol");
+        System.out.println("0- Cikis");
+        System.out.print("Seciminiz: ");
+
         String secim = scanner.next();
 
         if (secim.equals("1")) girisYap();
         else if (secim.equals("2")) kayitOl();
         else if (secim.equals("0")) System.exit(0);
-        else System.out.println("[!] Gecersiz secim.");
+        else System.out.println("Gecersiz secim!");
     }
 
+    // ================= GIRIS =================
     private void girisYap() {
-        System.out.print("TC Numaranizi giriniz: ");
+        System.out.print("TC No'nuzu giriniz: ");
         String tc = scanner.next();
-        
-        Musteri bulunan = null;
+
         for (Musteri m : musteriler) {
             if (m.getTcNo().equals(tc)) {
-                bulunan = m;
-                break;
-            }
-        }
-
-        if (bulunan == null) {
-            System.out.println("[!] Musteri bulunamadi.");
-            return;
-        }
-
-        int hak = 3;
-        while (hak > 0) {
-            System.out.print("Sifre (" + hak + " hak): ");
-            String sifre = scanner.next();
-            if (bulunan.getSifre().equals(sifre)) {
-                mevcutMusteri = bulunan;
-                System.out.println("\n[+] Basariyla giris yapildi. Hosgeldiniz " + bulunan.getAd());
+                int hak = 3;
+                while (hak-- > 0) {
+                    System.out.print("Sifrenizi giriniz: ");
+                    if (m.getSifre().equals(scanner.next())) {
+                        mevcutMusteri = m;
+                        System.out.println("Hosgeldiniz " + m.getAd());
+                        return;
+                    }
+                    System.out.println("Hatali sifre!");
+                }
                 return;
             }
-            hak--;
-            System.out.println("[!] Hatali sifre.");
         }
-        System.out.println("[!] 3 kez hatali giris! Menuye donuluyor.");
+        System.out.println("Musteri bulunamadi!");
     }
 
+    // ================= KAYIT =================
     private void kayitOl() {
-        System.out.println("\n--- YENI KAYIT ---");
-        String tc;
-        while (true) {
-            System.out.print("TC No (12 Hane): ");
-            tc = scanner.next();
-            if (tc.length() == 12 && tc.matches("[0-9]+")) break;
-            System.out.println("[!] HATA: TC 12 haneli rakam olmalidir!");
-        }
-
-        System.out.print("Ad Soyad: ");
+        System.out.print("Ad Soyad giriniz: ");
         scanner.nextLine();
         String ad = scanner.nextLine();
 
-        String iban;
-        while (true) {
-            System.out.print("IBAN (TR ile baslayan 26 hane): ");
-            iban = scanner.next();
-            if (iban.startsWith("TR") && iban.length() == 26) break;
-            System.out.println("[!] HATA: IBAN gecersiz formatta!");
-        }
+        System.out.print("TC No giriniz: ");
+        String tc = scanner.next();
 
-        System.out.print("Sifre Belirleyin: ");
+        System.out.print("Sifre giriniz: ");
         String sifre = scanner.next();
 
+        String iban = rastgeleIbanUret();
+
         musteriler.add(new Musteri(ad, tc, iban, sifre));
-        System.out.println("[+] Kayit basarili! Sayin " + ad + " giris yapabilirsiniz.");
+
+        System.out.println("\n[+] Kayit basarili!");
+        System.out.println("Size atanan IBAN: " + iban);
+
+        kayitSonuMenu();
     }
 
+    // ================= MUSTERI MENU =================
     private void islemMenusu() {
-        System.out.println("\n--- MUSTERI PANELI: " + mevcutMusteri.getAd() + " ---");
-        System.out.println("1- Para Yatir\n2- Faiz Islet\n3- Para Transferi\n4- Hesap Ozeti\n0- Cikis");
-        System.out.print("Secim: ");
-        
-        String secim = scanner.next();
+        System.out.println("\n--- MUSTERI MENU ---");
+        System.out.println("1- Para Yatir");
+        System.out.println("2- Para Cek");
+        System.out.println("3- Para Transferi");
+        System.out.println("4- Hesap Ozeti");
+        System.out.println("5- Sifre Degistir");
+        System.out.println("0- Oturum Kapat");
+        System.out.print("Seciminiz: ");
+
         try {
+            String secim = scanner.next();
+
             switch (secim) {
                 case "1":
                     System.out.print("Miktar: ");
-                    double m = scanner.nextDouble();
-                    mevcutMusteri.getHesap().paraYatir(m);
-                    System.out.println("Yeni Bakiye: " + mevcutMusteri.getHesap().getBakiye());
+                    mevcutMusteri.getHesap().paraYatir(scanner.nextDouble());
                     break;
+
                 case "2":
-                    mevcutMusteri.getHesap().faizHesapla();
-                    System.out.println("Islem tamamlandi.");
+                    System.out.print("Miktar: ");
+                    mevcutMusteri.getHesap().paraCek(scanner.nextDouble());
                     break;
+
                 case "3":
                     transferYap();
                     break;
+
                 case "4":
                     mevcutMusteri.getHesap().islemleriGoster();
                     break;
-                case "0":
-                    System.out.println("Oturum kapatılıyor ve sistemden çıkılıyor...");
-                    System.exit(0); // Bu satır programı tamamen bitirir, başa döndürmez.
+
+                case "5":
+                    sifreDegistir();
                     break;
+
+                case "0":
+                    mevcutMusteri = null;
+                    System.out.println("Oturum kapatildi.");
+                    break;
+
                 default:
-                    System.out.println("[!] Gecersiz secim.");
+                    System.out.println("Gecersiz secim!");
             }
         } catch (Exception e) {
-            System.out.println("[!] Hata: " + e.getMessage());
+            System.out.println("Hata: " + e.getMessage());
         }
     }
 
+    // ================= SIFRE DEGISTIR =================
+    private void sifreDegistir() {
+        System.out.print("Eski sifre: ");
+        if (!mevcutMusteri.getSifre().equals(scanner.next())) {
+            System.out.println("Hatali sifre!");
+            return;
+        }
+
+        System.out.print("Yeni sifre: ");
+        String s1 = scanner.next();
+        System.out.print("Yeni sifre tekrar: ");
+        String s2 = scanner.next();
+
+        if (!s1.equals(s2)) {
+            System.out.println("Sifreler uyusmuyor!");
+            return;
+        }
+
+        mevcutMusteri.setSifre(s1);
+        System.out.println("Sifre degistirildi.");
+    }
+
+    // ================= TRANSFER =================
     private void transferYap() throws Exception {
         System.out.print("Alici IBAN: ");
-        String hedefIban = scanner.next();
+        String iban = scanner.next();
 
+        for (Musteri m : musteriler) {
+            if (m.getIban().equals(iban)) {
+                System.out.print("Miktar: ");
+                double miktar = scanner.nextDouble();
+
+                boolean eftMi = !m.getIban().substring(2, 5)
+                        .equals(mevcutMusteri.getIban().substring(2, 5));
+
+                mevcutMusteri.getHesap().transfer(m.getHesap(), miktar, eftMi);
+
+                System.out.println("Transfer basarili.");
+                return;
+            }
+        }
+        System.out.println("Alici bulunamadi!");
+    }
+
+    // ================= IBAN URET =================
+    private String rastgeleIbanUret() {
+        StringBuilder iban = new StringBuilder("TR");
+        for (int i = 0; i < 24; i++) {
+            iban.append((int) (Math.random() * 10));
+        }
+        return iban.toString();
+    }
+
+    // ================= KAYIT SONU =================
+    private void kayitSonuMenu() {
+        System.out.print("\nAna menuye donmek ister misiniz? (E/H): ");
+        String secim = scanner.next();
+
+        if (!secim.equalsIgnoreCase("E")) {
+            System.out.println("Program kapatiliyor...");
+            System.exit(0);
+        }
+    }
+
+    // ==================== TEST VE OTOMATİK KULLANIM İÇİN EKLENEN METODLAR ====================
+    public ArrayList<Musteri> getMusteriler() { return musteriler; }
+    public Musteri getMevcutMusteri() { return mevcutMusteri; }
+    public void setMevcutMusteri(Musteri m) { mevcutMusteri = m; }
+
+    public void kayitOl(String ad, String tc, String iban) {
+        musteriler.add(new Musteri(ad, tc, iban, "1234")); // test için sabit sifre
+    }
+
+    public boolean girisYap(String tc, String sifre) {
+        for (Musteri m : musteriler) {
+            if (m.getTcNo().equals(tc) && m.getSifre().equals(sifre)) {
+                mevcutMusteri = m;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void transferYap(String iban, double miktar, boolean eft) throws Exception {
         Musteri alici = null;
         for (Musteri m : musteriler) {
-            if (m.getIban().equals(hedefIban)) {
+            if (m.getIban().equals(iban)) {
                 alici = m;
                 break;
             }
         }
-
-        if (alici == null) {
-            System.out.println("[!] Alici bulunamadi. Sadece kayitli müşterilere gonderim yapilabilir.");
-            return;
-        }
-
-        System.out.print(alici.getAd() + " kisisine miktar: ");
-        double miktar = scanner.nextDouble();
-
-        System.out.print("Onayliyor musunuz? (E/H): ");
-        if (scanner.next().equalsIgnoreCase("E")) {
-            System.out.print("Guvenlik icin sifreniz: ");
-            if (mevcutMusteri.getSifre().equals(scanner.next())) {
-                mevcutMusteri.getHesap().transfer(alici.getHesap(), miktar);
-                System.out.println("[+] Transfer basarili. Aliciya aktarildi.");
-            } else {
-                System.out.println("[!] Hatali sifre!");
-            }
-        }
+        if (alici == null) throw new Exception("Alici bulunamadi!");
+        mevcutMusteri.getHesap().transfer(alici.getHesap(), miktar, eft);
     }
 }
