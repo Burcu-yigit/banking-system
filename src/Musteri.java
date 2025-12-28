@@ -5,25 +5,37 @@ public class Musteri {
     private String tcNo;
     private String iban;
     private String sifre;
-    private SavingsAccount vadeliHesap;
+    private Hesap hesap;
 
     public Musteri(String ad, String tcNo, String iban, String sifre) {
         this.ad = ad;
         this.tcNo = tcNo;
         this.iban = iban;
         this.sifre = sifre;
-        // Her müşterinin kendine ait, IBAN'ı ile tanımlı bir hesabı olur
-        this.vadeliHesap = new SavingsAccount(iban, 0); 
+        this.hesap = new Hesap();
     }
 
-    public String getTcNo() { 
-    	return tcNo; }
-    public String getAd() { 
-    	return ad; }
-    public String getSifre() {
-    	return sifre; }
+    public String getAd() {
+        return ad;
+    }
+
+    public String getTcNo() {
+        return tcNo;
+    }
+
     public String getIban() {
-    	return iban; }
-    public SavingsAccount getHesap() {  
-    	return vadeliHesap; }
+        return iban;
+    }
+
+    public String getSifre() {
+        return sifre;
+    }
+
+    public void setSifre(String sifre) {
+        this.sifre = sifre;
+    }
+
+    public Hesap getHesap() {
+        return hesap;
+    }
 }
