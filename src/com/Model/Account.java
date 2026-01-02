@@ -1,7 +1,5 @@
 package com.Model;
 
-
-
 import com.service.Transferable;
 import com.exception.InsufficientBalanceException;
 import java.util.ArrayList;
@@ -24,18 +22,19 @@ public abstract class Account implements Transferable {
     }
 
     public void paraYatir(double miktar) {
+        if (miktar <= 0) {
+            throw new IllegalArgumentException("Geçersiz miktar!");
+        }
         bakiye += miktar;
         islemler.add(new Transaction("Para Yatırma", miktar));
     }
 
-    public abstract void paraCek(double miktar)
-            throws InsufficientBalanceException;
+    // Abstract metod: alt sınıflar kendi paraCek limitini uygular
+    public abstract void paraCek(double miktar) throws InsufficientBalanceException;
 
     @Override
-    public void transfer(Account hedef, double miktar)
-            throws InsufficientBalanceException {
-
-        paraCek(miktar);
+    public void transfer(Account hedef, double miktar) throws InsufficientBalanceException {
+        paraCek(miktar); // kendi sınıfındaki paraCek çağrılır
         hedef.paraYatir(miktar);
         islemler.add(new Transaction("Havale", miktar));
     }
@@ -44,4 +43,3 @@ public abstract class Account implements Transferable {
         islemler.forEach(System.out::println);
     }
 }
-//abstract classtır 
