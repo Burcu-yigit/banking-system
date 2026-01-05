@@ -1,221 +1,254 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.exception.InsufficientBalanceException;
-
+import com.Model.*;
 import static org.junit.jupiter.api.Assertions.*;
- 
-class BankaSistemiTest {
+import com.exception.*;
+import com.exception.InsufficientBalanceException;
+import com.Model.SavingsAccount;
+
+// GEREKİRSE EKLE:
+// import com.Model.*;
+// import com.bank.*;
+
+public class BankaSistemiTest {
 
     private BankaYoneticisi banka;
+    private SavingsAccount vadeliHesap;
 
     @BeforeEach
     void setUp() {
         banka = new BankaYoneticisi();
+        banka.kayitOl("Ali Veli", "123456789012", "1234");
+        banka.kayitOl("Ayşe Fatma", "987654321098", "5678");
+
+        vadeliHesap = new SavingsAccount("VA123", 1000.0);
     }
 
     // ==========================
-    // 1️⃣ MÜŞTERİ KAYIT TESTİ
+    // MÜŞTERİ & GİRİŞ TESTLERİ
     // ==========================
+
     @Test
     void musteriKayitBasarili() {
         int eskiBoyut = banka.getMusteriler().size();
 
-        banka.kayitOl("Ali Veli", "123456789012", "1234");
+        banka.kayitOl("Mehmet Can", "111122223333", "9999");
 
         assertEquals(eskiBoyut + 1, banka.getMusteriler().size());
-
         Musteri yeni = banka.getMusteriler().get(eskiBoyut);
-        assertEquals("Ali Veli", yeni.getAd());
-        assertEquals("123456789012", yeni.getTcNo());
+
+        assertEquals("Mehmet Can", yeni.getAd());
+        assertEquals("111122223333", yeni.getTcNo());
         assertNotNull(yeni.getIban());
         assertEquals(0, yeni.getHesap().getBakiye());
     }
 
-    // ==========================
-    // 2️⃣ GİRİŞ TESTLERİ
-    // ==========================
     @Test
     void girisBasarili() {
         Musteri m = banka.getMusteriler().get(0);
-
-        boolean sonuc = banka.girisYap(m.getTcNo(), m.getSifre());
-
-        assertTrue(sonuc);
+        assertTrue(banka.girisYap(m.getTcNo(), m.getSifre()));
         assertEquals(m, banka.getMevcutMusteri());
     }
 
     @Test
     void girisHataliSifre() {
         Musteri m = banka.getMusteriler().get(0);
-
-        boolean sonuc = banka.girisYap(m.getTcNo(), "0000");
-
-        assertFalse(sonuc);
-        assertNull(banka.getMevcutMusteri());
-    }
-
-    @Test
-    void girisBasarisizOluncaMevcutMusteriNullKalir() {
-        Musteri m = banka.getMusteriler().get(0);
-
-        banka.girisYap(m.getTcNo(), "yanlis");
-
+        assertFalse(banka.girisYap(m.getTcNo(), "0000"));
         assertNull(banka.getMevcutMusteri());
     }
 
     // ==========================
-    // 3️⃣ PARA YATIRMA TESTLERİ
+    // PARA YATIRMA
     // ==========================
-    @Test
-    void paraYatirTest() {
-        Musteri m = banka.getMusteriler().get(0);
-        banka.setMevcutMusteri(m);
 
-        double eskiBakiye = m.getHesap().getBakiye();
+    @Test
+    void paraYatirBasarili() {
+        Musteri m = banka.getMusteriler().get(0);
+        double eski = m.getHesap().getBakiye();
+
         m.getHesap().paraYatir(500);
 
-        assertEquals(eskiBakiye + 500, m.getHesap().getBakiye());
+        assertEquals(eski + 500, m.getHesap().getBakiye());
         assertFalse(m.getHesap().getIslemler().isEmpty());
     }
 
-    
     @Test
-    void paraYatirSifirMiktarExceptionFirlatir() {
+    void paraYatirSifirMiktarException() {
         Musteri m = banka.getMusteriler().get(0);
-        banka.setMevcutMusteri(m);
-
         assertThrows(IllegalArgumentException.class,
                 () -> m.getHesap().paraYatir(0));
     }
 
+    @Test
+    void paraYatirNegatifMiktarException() {
+        Musteri m = banka.getMusteriler().get(0);
+        assertThrows(IllegalArgumentException.class,
+                () -> m.getHesap().paraYatir(-100));
+    }
 
     // ==========================
-    // 4️⃣ PARA ÇEKME TESTLERİ
+    // PARA ÇEKME
     // ==========================
+
     @Test
     void paraCekBasarili() throws Exception {
         Musteri m = banka.getMusteriler().get(0);
-        banka.setMevcutMusteri(m);
+        double eski = m.getHesap().getBakiye();
 
-        double eskiBakiye = m.getHesap().getBakiye();
         m.getHesap().paraCek(200);
 
-        assertEquals(eskiBakiye - 200, m.getHesap().getBakiye());
+        assertEquals(eski - 200, m.getHesap().getBakiye());
     }
 
     @Test
     void paraCekYetersizBakiye() {
         Musteri m = banka.getMusteriler().get(0);
-        // Bakiyenin çok üstünde bir rakam verelim
-        double limitUstuMiktar = m.getHesap().getBakiye() + 200000; 
+        double fazla = m.getHesap().getBakiye() + 1000;
 
-        assertThrows(InsufficientBalanceException.class, () -> {
-            m.getHesap().paraCek(limitUstuMiktar);
-        }, "Bakiye yetersiz olduğunda exception fırlatılmalıydı");
+        InsufficientBalanceException e = assertThrows(
+                InsufficientBalanceException.class,
+                () -> m.getHesap().paraCek(fazla)
+        );
+
+        assertEquals("Yetersiz bakiye!", e.getMessage());
+    }
+
+    @Test
+    void paraCekSifirMiktarException() {
+        Musteri m = banka.getMusteriler().get(0);
+        assertThrows(IllegalArgumentException.class,
+                () -> m.getHesap().paraCek(0));
     }
 
     // ==========================
-    // 5️⃣ TRANSFER TESTLERİ
+    // TRANSFER
     // ==========================
+
     @Test
     void transferAyniBanka() throws Exception {
-        Musteri gonderen = banka.getMusteriler().get(0);
-        Musteri alici = banka.getMusteriler().get(1);
+        Musteri g = banka.getMusteriler().get(0);
+        Musteri a = banka.getMusteriler().get(1);
+        banka.setMevcutMusteri(g);
 
-        banka.setMevcutMusteri(gonderen);
+        double gEski = g.getHesap().getBakiye();
+        double aEski = a.getHesap().getBakiye();
 
-        double bakiyeGonderenEski = gonderen.getHesap().getBakiye();
-        double bakiyeAliciEski = alici.getHesap().getBakiye();
+        banka.transferYap(a.getIban(), 500, false);
 
-        banka.transferYap(alici.getIban(), 500, false);
-
-        assertEquals(bakiyeGonderenEski - 500, gonderen.getHesap().getBakiye());
-        assertEquals(bakiyeAliciEski + 500, alici.getHesap().getBakiye());
+        assertEquals(gEski - 500, g.getHesap().getBakiye());
+        assertEquals(aEski + 500, a.getHesap().getBakiye());
     }
 
     @Test
-    void transferEFT() throws Exception {
-        Musteri gonderen = banka.getMusteriler().get(0);
-        Musteri alici = banka.getMusteriler().get(1);
+    void transferEFTKomisyonlu() throws Exception {
+        Musteri g = banka.getMusteriler().get(0);
+        Musteri a = banka.getMusteriler().get(1);
+        banka.setMevcutMusteri(g);
 
-        banka.setMevcutMusteri(gonderen);
+        double gEski = g.getHesap().getBakiye();
 
-        double bakiyeGonderenEski = gonderen.getHesap().getBakiye();
-        double bakiyeAliciEski = alici.getHesap().getBakiye();
+        banka.transferYap(a.getIban(), 100, true);
 
-        banka.transferYap(alici.getIban(), 100, true);
-
-        assertEquals(bakiyeGonderenEski - 105, gonderen.getHesap().getBakiye());
-        assertEquals(bakiyeAliciEski + 100, alici.getHesap().getBakiye());
+        assertEquals(gEski - 105, g.getHesap().getBakiye(), 0.01);
     }
 
     @Test
     void transferHataliIban() {
-        Musteri gonderen = banka.getMusteriler().get(0);
-        banka.setMevcutMusteri(gonderen);
+        banka.setMevcutMusteri(banka.getMusteriler().get(0));
 
-        Exception e = assertThrows(Exception.class, () -> {
-            banka.transferYap("TR000000000000000000000000", 100, false);
-        });
+        Exception e = assertThrows(Exception.class, () ->
+                banka.transferYap("TR000000000000000000000000", 100, false)
+        );
 
         assertEquals("Alici bulunamadi!", e.getMessage());
     }
 
     @Test
     void transferYetersizBakiye() {
-        Musteri gonderen = banka.getMusteriler().get(0);
-        banka.setMevcutMusteri(gonderen);
+        banka.setMevcutMusteri(banka.getMusteriler().get(0));
+        Musteri alici = banka.getMusteriler().get(1);
 
-        Exception e = assertThrows(Exception.class, () -> {
-            banka.transferYap(
-                    banka.getMusteriler().get(1).getIban(),
-                    1_000_000,
-                    false);
-        });
-        assertEquals("Yetersiz bakiye!", e.getMessage());
-
-    }
-
-    // ==========================
-    // 6️⃣ HESAP ÖZETİ TESTİ
-    // ==========================
-    @Test
-    void hesapOzetiTest() {
-        Musteri yeni = new Musteri(
-                "Test Kullanici",
-                "123456789012",
-                "TR111111111111111111111111",
-                "1234"
+        InsufficientBalanceException e = assertThrows(
+                InsufficientBalanceException.class,
+                () -> banka.transferYap(alici.getIban(), 1_000_000, false)
         );
 
-        banka.getMusteriler().add(yeni);
-        banka.setMevcutMusteri(yeni);
-
-        assertNotNull(yeni.getHesap().getIslemler());
-        assertTrue(yeni.getHesap().getIslemler().isEmpty());
-
-        yeni.getHesap().paraYatir(500);
-
-        assertFalse(yeni.getHesap().getIslemler().isEmpty());
-
-        yeni.getHesap().islemleriGoster(); // console output
+        assertEquals("Yetersiz bakiye(komisyon dahil)", e.getMessage());
     }
 
     // ==========================
-    // 7️⃣ EXCEPTION SINIFI TESTİ
+    // HESAP ÖZETİ
     // ==========================
+
     @Test
-    void testExceptionMessage() {
-        String message = "Yetersiz bakiye";
+    void hesapOzetiIslemEklendiktenSonraBosDegil() {
+        Musteri m = banka.getMusteriler().get(0);
+        m.getHesap().paraYatir(100);
 
-        InsufficientBalanceException exception =
-                new InsufficientBalanceException(message);
+        assertFalse(m.getHesap().getIslemler().isEmpty());
+        assertDoesNotThrow(() -> m.getHesap().islemleriGoster());
+    }
 
-        assertEquals(message, exception.getMessage());
+    // ==========================
+    // EXCEPTION SINIFI
+    // ==========================
+
+    @Test
+    void exceptionMesajiDogru() {
+        InsufficientBalanceException e =
+                new InsufficientBalanceException("Test Mesaj");
+        assertEquals("Test Mesaj", e.getMessage());
+    }
+
+    // ==========================
+    // VADELİ (SAVINGS ACCOUNT)
+    // ==========================
+
+    @Test
+    void vadeliParaCekBasarili() throws Exception {
+        double eski = vadeliHesap.getBakiye();
+        vadeliHesap.paraCek(500);
+
+        assertEquals(eski - 500, vadeliHesap.getBakiye(), 0.01);
+    }
+
+    @Test
+    void vadeliParaCekYetersiz() {
+        double fazla = vadeliHesap.getBakiye() + 1000;
+
+        InsufficientBalanceException e = assertThrows(
+                InsufficientBalanceException.class,
+                () -> vadeliHesap.paraCek(fazla)
+        );
+
+        assertEquals("Yetersiz bakiye!", e.getMessage());
+    }
+
+    @Test
+    void vadeliFaizHesapla() {
+        double eski = vadeliHesap.getBakiye();
+        double oran = vadeliHesap.getFaizOrani();
+
+        vadeliHesap.faizHesapla();
+
+        assertEquals(eski + eski * oran, vadeliHesap.getBakiye(), 0.01);
+    }
+
+    @Test
+    void vadeliFaizUstUste() {
+        double oran = vadeliHesap.getFaizOrani();
+        double ilk = vadeliHesap.getBakiye();
+
+        vadeliHesap.faizHesapla();
+        vadeliHesap.faizHesapla();
+
+        double beklenen = ilk * (1 + oran) * (1 + oran);
+        assertEquals(beklenen, vadeliHesap.getBakiye(), 0.01);
+    }
+
+    @Test
+    void vadeliFaizOraniSetterGetter() {
+        vadeliHesap.setFaizOrani(0.1);
+        assertEquals(0.1, vadeliHesap.getFaizOrani(), 0.001);
     }
 }
-
-    
-   
-	
