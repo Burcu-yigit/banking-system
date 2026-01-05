@@ -27,6 +27,7 @@ public abstract class Account implements Transferable {
         }
         bakiye += miktar;
         islemler.add(new Transaction("Para Yatırma", miktar));
+        System.out.println("para basarili bir sekilde yatirildi..");
     }
 
     // Abstract metod: alt sınıflar kendi paraCek limitini uygular
@@ -41,5 +42,13 @@ public abstract class Account implements Transferable {
 
     public void islemleriGoster() {
         islemler.forEach(System.out::println);
+    }
+    
+    public List<Transaction> getIslemler() {
+        return islemler;
+    }
+
+    public String getHesapNumarasi() {
+        return hesapNumarasi;
     }
 }
